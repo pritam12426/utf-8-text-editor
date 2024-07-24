@@ -3,8 +3,18 @@
 #include <unistd.h>
 
 
-void enableRawMode() {
-  struct termios raw;
+struct termios orig_termios;
+
+
+void disableRawMode(void) {
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
+}
+
+
+void enableRawMode(void) {
+  tcgetattr(STDIN_FILENO, &orig_termios);
+  atexit(disableRawMode);
+  struct termios raw = orig_termios;
   tcgetattr(STDIN_FILENO, &raw);
   raw.c_lflag &= ~(ECHO);
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
@@ -15,6 +25,9 @@ int main(void) {
   enableRawMode();
 
   char c = 0;
-  while ((read(STDIN_FILENO, &c, 1) == 1) && (c != 'q')) {}
+  while ((read(STDIN_FILENO, &c, 1) == 1) && (c != 'q')) {
+    ;
+  }
+
   return 0;
 }
